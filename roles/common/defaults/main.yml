@@ -1,5 +1,7 @@
 ---
 
+ci_runtime_user: mblomdahl
+
 sysadmins:
   - user: vtepliuk
     passwd: !vault |

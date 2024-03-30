@@ -1,0 +1,73 @@
+---
+
+- name: Install Java OpenJDK 8
+  ansible.builtin.yum: name=java-1.8.0-openjdk-devel state=present
+  tags: system, java
+
+- name: Install Java OpenJDK 11
+  ansible.builtin.yum: name=java-11-openjdk-devel state=present
+  tags: system, java
+
+- name: Install Java OpenJDK 17
+  ansible.builtin.yum: name=java-17-openjdk-devel state=present
+  tags: system, java
+
+- name: Install Java OpenJDK 21
+  ansible.builtin.yum: name=java-21-openjdk-devel state=present
+  tags: system, java
+
+- name: Mark /home/{{ ci_runtime_user }}/.jenv as a safe directory
+  ansible.builtin.blockinfile:
+    dest: /root/.gitconfig
+    marker: "# {mark} ANSIBLE MANAGED BLOCK common"
+    block: |
+      [safe]
+      	directory = /home/{{ ci_runtime_user }}/.jenv
+  tags: system, jenv
+
+- name: Install jEnv for '{{ ci_runtime_user }}' user
+  ansible.builtin.git:
+    repo: 'https://github.com/jenv/jenv.git'
+    dest: /home/{{ ci_runtime_user }}/.jenv
+    update: yes
+    accept_hostkey: yes
+  tags: system, jenv
+
+- name: Create .jenv directories for '{{ ci_runtime_user }}' user
+  ansible.builtin.file:
+    path: /home/{{ ci_runtime_user }}/{{ item }}
+    state: directory
+    owner: "{{ ci_runtime_user }}"
+    group: "{{ ci_runtime_user }}"
+    mode: 0755
+  with_items:
+    - .jenv
+    - .jenv/shims
+    - .jenv/plugins
+    - .jenv/versions
+  register: java_jenv_directories
+  tags: system, jenv
+
+- name: Update PATH with jenv binaries for '{{ ci_runtime_user }}' user
+  ansible.builtin.blockinfile:
+    dest: /home/{{ ci_runtime_user }}/.bash_profile
+    insertbefore: export PATH
+    marker: "# {mark} ANSIBLE MANAGED BLOCK common"
+    block: |
+      export PATH=$HOME/.jenv/bin:$PATH
+      eval "$(jenv init -)"
+  tags: system, jenv, bash-profile
+
+- name: Add installed Java versions to jEnv
+  shell: bash -l -c 'jenv add {{ item }}'
+  become: yes
+  become_user: "{{ ci_runtime_user }}"
+  with_items:
+    - /usr/lib/jvm/java-1.8.0-openjdk
+    - /usr/lib/jvm/java-11-openjdk
+    - /usr/lib/jvm/java-17-openjdk
+    - /usr/lib/jvm/java-21-openjdk
+  when: java_jenv_directories is changed
+  tags: java
+
+...

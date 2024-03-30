@@ -36,13 +36,17 @@
   ansible.builtin.include_tasks: 3-python.yml
   tags: system, python
 
-- name: Install Node 10 from AppStream
-  ansible.builtin.yum: name=nodejs-devel state=present
-  when: ansible_distribution == 'AlmaLinux'
-  tags: common
+- name: Run config tasks in 4-java.yml
+  debug:
+    msg: 'Running config tasks in common/tasks/4-java.yml for {{ inventory_hostname }}...'
+  tags: system, java, jenv
 
-- name: Install OpenJDK 21 from AppStream
-  yum: name=java-21-openjdk-devel state=present
+- name: Install OpenJDK and jEnv
+  ansible.builtin.include_tasks: 4-java.yml
+  tags: system, java, jenv
+
+- name: Install Node 10 from AppStream
+  ansible.builtin.yum: name=nodejs-devel state=absent
   when: ansible_distribution == 'AlmaLinux'
   tags: common
 

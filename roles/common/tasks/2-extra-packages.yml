@@ -25,13 +25,13 @@
   failed_when: extra_packages_gnu_parallel_install_root.rc != 255
   tags: system, extra-packages
 
-- name: Suppress GNU parallel citation notice for 'mblomdahl' user
+- name: Suppress GNU parallel citation notice for '{{ ci_runtime_user }}' user
   ansible.builtin.shell: bash -ilc "echo \"will cite\" | parallel --bibtex"
   become: yes
-  become_user: mblomdahl
+  become_user: "{{ ci_runtime_user }}"
   when: extra_packages_gnu_parallel_install is changed
-  register: extra_packages_gnu_parallel_install_mblomdahl
-  failed_when: extra_packages_gnu_parallel_install_mblomdahl.rc != 255
+  register: extra_packages_gnu_parallel_install_ci_runtime_user
+  failed_when: extra_packages_gnu_parallel_install_ci_runtime_user.rc != 255
   tags: system, extra-packages
 
 - name: Check for Git-LFS
