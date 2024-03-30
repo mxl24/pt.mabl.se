@@ -1,112 +1,22 @@
 ---
 
-- name: Enable SELinux
-  ansible.posix.selinux: policy=targeted state=enforcing
-  tags: common
+- name: Run config tasks in 0-base-system.yml
+  debug:
+    msg: 'Running config tasks in common/tasks/0-base-system.yml for {{ inventory_hostname }}...'
+  tags: system, base-packages, firewall, etc-environment
 
-- name: Set hostname
-  ansible.builtin.hostname: name="{{ inventory_hostname }}"
-  tags: common
+- name: Configure OS baseline with base packages and firewall
+  ansible.builtin.include_tasks: 0-base-system.yml
+  tags: system, base-packages, firewall, etc-environment
 
-- name: set timezone to europe/stockholm
-  ansible.builtin.copy: src=/usr/share/zoneinfo/Europe/Stockholm dest=/etc/localtime
-  tags: common
+- name: Run config tasks in 1-sysadmin-users.yml
+  debug:
+    msg: 'Running config tasks in common/tasks/1-sysadmin-users.yml for {{ inventory_hostname }}...'
+  tags: system, sysadmin-users, etc-environment
 
-- name: configure locale properly to avoid nag on ssh login
-  lineinfile:
-    path: /etc/environment
-    create: yes
-    mode: 0644
-    line: "{{ item }}"
-  with_items:
-    - LC_ALL=en_US.UTF-8
-    - LC_CTYPE=en_US.UTF-8
-  when: ansible_distribution == 'CentOS'
-  tags: common
-
-- name: apply sysctl tweaks
-  when: ansible_distribution == 'CentOS'
-  block:
-    - name: template sysctl tweaks (elastic and friends)
-      template: src=tweaks.conf.j2 dest=/etc/sysctl.d/tweaks.conf
-      register: sysctld_tweaks
-      tags: common
-    - name: apply sysctl config if changed
-      shell: sysctl --system
-      when: sysctld_tweaks is changed
-      tags: common
-  tags: common
-
-- name: Install NTP client
-  ansible.builtin.yum: name=chrony state=present
-  tags: common
-
-- name: NTP client running and enabled
-  ansible.builtin.service: name=chronyd state=started enabled=yes
-  tags: common
-
-- name: Install firewalld
-  ansible.builtin.yum: name=firewalld state=present
-  tags: common
-
-- name: Firewalld running and enabled
-  ansible.builtin.service: name=firewalld state=started enabled=yes
-  tags: common
-
-- name: Install wget, unzip, emacs, mlocate and such
-  ansible.builtin.yum:
-    name: [ 'wget', 'zip', 'unzip', 'emacs', 'mlocate', 'bind-utils', 'pigz', 'man-pages',
-            'yum-plugin-versionlock', 'lsof', 'iotop', 'rsync', 'tcpdump', 'sysstat', 'tmux',
-            'system-storage-manager', 'traceroute', 'bzip2', 'telnet', 'tree', 'createrepo' ]
-    state: present
-  tags: common
-
-- name: install centos packages policycoreutils-python and lynx
-  yum:
-    name: [ 'policycoreutils-python', 'lynx' ]
-    state: present
-  when: ansible_distribution == 'CentOS'
-  tags: common
-
-- name: disable emacs backup files by default
-  lineinfile:
-    line: (setq make-backup-files nil)
-    path: /usr/share/emacs/site-lisp/default.el
-    state: present
-  tags: common
-
-- name: ius repo
-  yum_repository:
-    name: ius
-    description: IUS for Enterprise Linux {{ ansible_distribution_major_version }} - $basearch
-    baseurl: https://repo.ius.io/{{ ansible_distribution_major_version }}/$basearch/
-    gpgkey: https://repo.ius.io/RPM-GPG-KEY-IUS-7
-    enabled: no
-  when: ansible_distribution == 'CentOS'
-  tags: common
-
-- name: Install Git from AppStream
-  ansible.builtin.yum: name=git-all state=present
-  when: ansible_distribution == 'AlmaLinux'
-  tags: common
-
-- name: install ius git236
-  when: ansible_distribution == 'CentOS'
-  block:
-    - name: install ius git236 (2.x)
-      yum: name=git236 enablerepo=ius state=present
-      ignore_errors: yes
-      register: install_ius_git236
-      tags: common
-    - name: uninstall git (1.8)
-      yum: name=git state=absent
-      when: install_ius_git236 is failed
-      tags: common
-    - name: install ius git236 (2.x)
-      yum: name=git236 enablerepo=ius state=present
-      when: install_ius_git236 is failed
-      tags: common
-  tags: common
+- name: Create sysadmin user and provision keys
+  ansible.builtin.include_tasks: 1-sysadmin-users.yml
+  tags: system, sysadmin-users, docker
 
 - name: check for git-lfs
   shell: git lfs version
@@ -273,75 +183,6 @@
 - name: Install OpenJDK 21 from AppStream
   yum: name=java-21-openjdk-devel state=present
   when: ansible_distribution == 'AlmaLinux'
-  tags: common
-
-- name: Configure sysadmin accounts
-  ansible.builtin.user:
-    name: "{{ item.user }}"
-    password: "{{ item.passwd }}"
-    groups: wheel
-    state: present
-    force: yes
-  with_items: "{{ sysadmins }}"
-  tags: common
-
-- name: Set ~/.ssh/authorized_keys for sysadmins
-  ansible.posix.authorized_key:
-    user: "{{ item.user }}"
-    key: "{{ lookup('file', item.user + '_id_rsa.pub') }}"
-    exclusive: yes
-  with_items: "{{ sysadmins }}"
-  tags: common
-
-- name: Update bashrc with better bash history for root and sysadmins
-  ansible.builtin.blockinfile:
-    dest: "{{ '/root' if item == 'root' else '/home/' + item }}/.bashrc"
-    create: yes
-    owner: "{{ item }}"
-    mode: 0644
-    marker: "# {mark} ANSIBLE MANAGED BLOCK common"
-    block: |
-      HISTFILESIZE=10000000
-      HISTSIZE=10000
-      HISTCONTROL=ignoreboth
-      HISTTIMEFORMAT='%y-%m-%dT%T  '
-      shopt -s cmdhist
-      shopt -s histappend
-      PROMPT_COMMAND='history -a'
-  with_items: "{{ ['root'] + (sysadmins | map(attribute='user') | list) }}"
-  tags: common
-
-- name: Assert sysadmins are named
-  fail: msg="sysadmins must be listed"
-  when: not (sysadmins | length)
-  tags: common
-
-- name: Allow incoming SSH traffic (firewalld)
-  ansible.posix.firewalld: port={{ sshd_port }}/tcp permanent=True state=enabled immediate=yes
-  tags: common
-
-- name: Disable password authentication and root login in sshd_config
-  ansible.builtin.blockinfile:
-    dest: /etc/ssh/sshd_config
-    marker: "# {mark} ANSIBLE MANAGED BLOCK common"
-    block: |
-      Port {{ sshd_port }}
-      PermitRootLogin no
-      AllowUsers {{ sysadmins | map(attribute='user') | join(' ') }}
-      Match Group wheel
-      	PasswordAuthentication no
-  register: sshd_config
-  tags: common
-
-- name: update selinux to allow ssh port {{ sshd_port }}
-  shell: semanage port -a -t ssh_port_t -p tcp {{ sshd_port }}
-  when: ansible_distribution == 'CentOS' and sshd_config is changed
-  ignore_errors: yes
-  tags: common
-
-- name: restart sshd to apply config changes
-  service: name=sshd state=restarted
-  when: sshd_config is changed
   tags: common
 
 #- name: Remove ~/.ssh/authorized_keys for 'root' user

@@ -1,0 +1,7 @@
+---
+
+- name: run updatedb
+  command: updatedb
+  check_mode: no
+
+...
