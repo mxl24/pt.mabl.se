@@ -19,7 +19,7 @@
 - name: Set ~/.ssh/authorized_keys for sysadmins
   ansible.posix.authorized_key:
     user: "{{ item.user }}"
-    key: "{{ lookup('file', item.user + '_id_rsa.pub') }}"
+    key: "{{ lookup('file', 'public_keys/' + item.user + '_id_rsa.pub') }}"
     exclusive: yes
   with_items: "{{ sysadmins }}"
   tags: system, sysadmin-users
