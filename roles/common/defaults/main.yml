@@ -31,4 +31,6 @@ sysadmins:
 
 sshd_port: 22
 
+daily_security_update_enabled: yes
+
 ...

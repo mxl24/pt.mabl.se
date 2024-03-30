@@ -24,7 +24,7 @@
   tags: system, docker
 
 - name: Add '{{ ci_runtime_user }}' user to 'docker' group
-  user: name={{ ci_runtime_user }} groups=docker append=yes
+  ansible.builtin.user: name={{ ci_runtime_user }} groups=docker append=yes
   tags: system, docker
 
 ...

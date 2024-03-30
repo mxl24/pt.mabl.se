@@ -7,6 +7,7 @@
     - role: common
 
     - role: minio-disks
+      when: ansible_distribution == 'CentOS'
 
     - role: nginx
       vhosts:
@@ -42,5 +43,6 @@
       when: ansible_distribution == 'CentOS'
 
     - role: docker
+      when: ansible_distribution == 'CentOS'
 
 ...

@@ -3,7 +3,7 @@
 - name: Run config tasks in 0-base-system.yml
   debug:
     msg: 'Running config tasks in common/tasks/0-base-system.yml for {{ inventory_hostname }}...'
-  tags: system, base-packages, firewall, etc-environment
+  tags: system, base-packages, firewall, lvm, etc-environment
 
 - name: Configure OS baseline with base packages and firewall
   ansible.builtin.include_tasks: 0-base-system.yml
@@ -47,38 +47,26 @@
 
 - name: Run config tasks in 5-docker.yml
   debug:
-    msg: 'Running config tasks in common/tasks/4-docker.yml for {{ inventory_hostname }}...'
+    msg: 'Running config tasks in common/tasks/5-docker.yml for {{ inventory_hostname }}...'
   tags: system, docker
 
 - name: Install Docker Engine
   ansible.builtin.include_tasks: 5-docker.yml
   tags: system, docker
 
+- name: Run config tasks in 6-crontab.yml
+  debug:
+    msg: 'Running config tasks in common/tasks/6-crontab.yml for {{ inventory_hostname }}...'
+  tags: system, crontab
+
+- name: Configure crontab entries
+  ansible.builtin.include_tasks: 6-crontab.yml
+  tags: system, crontab
+
 #- name: Remove ~/.ssh/authorized_keys for 'root' user
 #  ansible.builtin.file:
 #    path: /root/.ssh/authorized_keys
 #    state: absent
 #  tags: common
-
-- name: install yum-cron on centos
-  when: ansible_distribution == 'CentOS'
-  block:
-    - name: install yum-cron
-      yum: name=yum-cron state=present
-    - name: template /etc/yum/yum-cron.conf
-      template:
-        src: yum-cron.conf.j2
-        dest: /etc/yum/yum-cron.conf
-    - name: yum-cron service running and auto-starting
-      service: name=yum-cron state=started enabled=yes
-  tags: common
-
-- name: set root filesystem to 100g
-  lvol: vg=almalinux_hq lv=root size=100g resizefs=yes
-  tags: system, lvm
-
-- name: set home filesystem to 500g
-  lvol: vg=almalinux_hq lv=home size=500g resizefs=yes force=yes
-  tags: system, lvm
 
 ...

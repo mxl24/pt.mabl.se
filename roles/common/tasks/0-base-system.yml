@@ -67,6 +67,7 @@
       - man-pages
       - bash-completion
       - lsof
+      - lvm2
       - jq
       - vim-enhanced
       - emacs-nox
@@ -95,6 +96,14 @@
     path: /usr/share/emacs/site-lisp/default.el
     state: present
   tags: system, base-packages
+
+- name: Set root filesystem LV to 100g
+  ansible.builtin.lvol: vg=almalinux_hq lv=root size=100g resizefs=yes
+  tags: system, lvm
+
+- name: Set home filesystem LV to 500g
+  ansible.builtin.lvol: vg=almalinux_hq lv=home size=500g resizefs=yes force=yes
+  tags: system, lvm
 
 - name: Install mlocate and trigger updatedb
   ansible.builtin.yum: name=mlocate state=present

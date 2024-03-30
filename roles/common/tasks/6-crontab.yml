@@ -1,0 +1,17 @@
+---
+
+- name: Place daily security update install script
+  ansible.builtin.copy: src=crontab/daily-security-update.sh dest=/root/daily-security-update.sh
+  when: daily_security_update_enabled
+  tags: system, crontab
+
+- name: Enable/disable 'daily container clean-up' cron job every morning at 0400 (UTC)
+  ansible.builtin.cron:
+    name: daily-security-update
+    hour: "4"
+    minute: "0"
+    job: "bash /root/daily-security-update.sh >> /tmp/daily-security-update.log 2>&1"
+    state: "{{ 'present' if daily_security_update_enabled else 'absent' }}"
+  tags: system, crontab
+
+...
