@@ -76,6 +76,7 @@
       - bzip2
       - unzip
       - pigz
+      - sshpass
       - open-vm-tools
       - telnet
       - traceroute

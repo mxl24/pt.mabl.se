@@ -1,0 +1,70 @@
+---
+
+- name: Configure Python Pip to disable version check
+  ansible.builtin.blockinfile:
+    path: /etc/pip.conf
+    create: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK common"
+    block: |
+      [global]
+      disable-pip-version-check = True
+  tags: system, python
+
+- name: Install Python 3.11 from AppStream
+  ansible.builtin.yum: name=python3.11-devel state=present
+  tags: system, python
+
+- name: Install Python 3.11 Pip, LXML, Requests, PyYAML, et cetera
+  ansible.builtin.yum:
+    name:
+      - python3.11-pip
+      - python3.11-lxml
+      - python3.11-requests
+      - python3.11-pyyaml
+      - python3.11-cffi
+      - python3.11-idna
+      - python3.11-cryptography
+      - python3.11-PyMySQL
+      - python3.11-charset-normalizer
+      - python3.11-jmespath
+      - python3.11-jinja2
+      - python3.11-markupsafe
+      - python3.11-netaddr
+      - python3.11-numpy
+      - python3.11-numpy-f2py
+      - python3.11-passlib
+      - python3.11-psycopg2
+      - python3.11-pyasn1
+      - python3.11-pycparser
+      - python3.11-pygit2
+      - python3.11-pysocks
+      - python3.11-rpm
+      - python3.11-scipy
+      - python3.11-setuptools
+      - python3.11-setuptools-wheel
+      - python3.11-six
+      - python3.11-wheel
+      - python3.11-xmltodict
+    state: present
+  tags: system, python
+
+- name: Common Python build dependencies libffi-devel, mysql-devel, libxslt-devel, swig, and friends
+  ansible.builtin.yum:
+    name:
+      - libffi-devel
+      - openssl-devel
+      - mysql-devel
+      - libxslt-devel
+      - sqlite-devel
+      - swig
+    state: present
+  tags: system, python
+
+- name: AWS CLI ~1.32.74 install via Pip3.11
+  ansible.builtin.pip:
+    name: awscli~=1.32.74
+    executable: /usr/bin/pip3.11
+    state: present
+  tags: system, python
+
+...

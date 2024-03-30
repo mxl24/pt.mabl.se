@@ -4,11 +4,12 @@
   ansible.builtin.yum: name=epel-release state=present
   tags: system, extra-packages
 
-- name: Install htop, multitail
+- name: Install htop, multitail, ansible
   ansible.builtin.yum:
     name:
       - htop
       - multitail
+      - ansible
     state: present
   tags: system, extra-packages
 

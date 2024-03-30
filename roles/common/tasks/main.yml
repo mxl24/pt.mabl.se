@@ -27,91 +27,14 @@
   ansible.builtin.include_tasks: 2-extra-packages.yml
   tags: system, extra-packages
 
-- name: Configure Python Pip to disable version check
-  ansible.builtin.blockinfile:
-    path: /etc/pip.conf
-    create: yes
-    marker: "# {mark} ANSIBLE MANAGED BLOCK common"
-    block: |
-      [global]
-      disable-pip-version-check = True
-  tags: common
+- name: Run config tasks in 3-python.yml
+  debug:
+    msg: 'Running config tasks in common/tasks/3-python.yml for {{ inventory_hostname }}...'
+  tags: system, python
 
-- name: install various old python2 packages on centos
-  when: ansible_distribution == 'CentOS'
-  block:
-    - name: install cryptography
-      pip: name=cryptography==2.6.1 state=present
-      tags: common
-
-    - name: install pynacl
-      pip: name=pynacl==1.2.1 state=present
-      tags: common
-
-    - name: install bcrypt
-      pip: name=bcrypt==3.1.3 state=present
-      tags: common
-
-    - name: install certifi
-      pip: name=certifi==2021.10.8 state=present
-      tags: common
-
-    - name: install passlib
-      pip: name=passlib==1.6.5 state=present
-      tags: common
-
-    - name: check for aws cli
-      stat: path=/bin/aws
-      register: bin_aws_cli
-      tags: common
-
-    - name: install awscli (with deps)
-      pip: name=awscli~=1.19.0 state=present
-      when: not (bin_aws_cli.stat.exists | bool)
-      tags: common
-
-    - name: install awscli (no-deps)
-      pip: name=awscli~=1.19.0 state=present extra_args=--no-deps
-      when: bin_aws_cli.stat.exists | bool
-      tags: common
-
-    - name: install passlib
-      pip: name=passlib state=present
-      tags: common
-
-- name: install centos-release-scl
-  yum: name=centos-release-scl state=present
-  when: ansible_distribution == 'CentOS'
-  tags: common
-
-- name: install python38 from scl
-  yum: name=rh-python38 state=present
-  when: ansible_distribution == 'CentOS'
-  tags: common
-
-- name: Install Python 3.11 from AppStream
-  ansible.builtin.yum: name=python3.11-devel state=present
-  when: ansible_distribution == 'AlmaLinux'
-  tags: common
-
-#- name: install scl pip-20 for rh-python38
-#  shell: scl enable rh-python38 "python3 -m pip install pip==20.3.3"
-#  register: scl_pip_install
-#  changed_when: scl_pip_install.stdout.find('already satisfied') == -1
-#  tags: common
-
-- name: install legacy node versions from scl
-  when: ansible_distribution == 'CentOS'
-  block:
-    - name: install rh-nodejs12
-      yum:
-        name: rh-nodejs12
-        state: present
-    - name: install rh-nodejs14
-      yum:
-        name: rh-nodejs14
-        state: present
-  tags: common
+- name: Install Python interpreter and development libraries
+  ansible.builtin.include_tasks: 3-python.yml
+  tags: system, python
 
 - name: Install Node 10 from AppStream
   ansible.builtin.yum: name=nodejs-devel state=present
@@ -144,10 +67,10 @@
 
 - name: set root filesystem to 100g
   lvol: vg=almalinux_hq lv=root size=100g resizefs=yes
-  tags: common
+  tags: system, lvm
 
 - name: set home filesystem to 500g
   lvol: vg=almalinux_hq lv=home size=500g resizefs=yes force=yes
-  tags: common
+  tags: system, lvm
 
 ...
