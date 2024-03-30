@@ -9,7 +9,7 @@
   tags: common
 
 - name: set timezone to europe/stockholm
-  copy: src=/usr/share/zoneinfo/Europe/Stockholm dest=/etc/localtime
+  ansible.builtin.copy: src=/usr/share/zoneinfo/Europe/Stockholm dest=/etc/localtime
   tags: common
 
 - name: configure locale properly to avoid nag on ssh login
@@ -37,14 +37,12 @@
       tags: common
   tags: common
 
-- name: install ntp
-  yum: name=ntp state=present
-  when: ansible_distribution == 'CentOS'
+- name: Install NTP client
+  ansible.builtin.yum: name=chrony state=present
   tags: common
 
-- name: ntpd running and enabled
-  service: name=ntpd state=started enabled=yes
-  when: ansible_distribution == 'CentOS'
+- name: NTP client running and enabled
+  ansible.builtin.service: name=chronyd state=started enabled=yes
   tags: common
 
 - name: Install firewalld
