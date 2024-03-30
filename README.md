@@ -17,12 +17,12 @@ Purpose
 Server Baseline
 ---------------
 
-*Hardware (OUTDATED, UPDATE!):*
+*Hardware:*
 
     OS: AlmaLinux 8.9 minimal (install 2024-03-21)
     CPUs: 4 (i5-7200 2.50 GHz, fanless)
     Memory: 32 GB (DDR4 SDRAM, 2133 MHz)
-    Disk: 256 GB SSD (Samsung)
+    Disk: 2 TB SSD (Kingston NV1 M.2)
     GPU: Intel HD Graphics 620
     Network:
       - enp3s0, Gigabit Ethernet (default)
@@ -30,23 +30,15 @@ Server Baseline
       - wlp2s0, 802.11ac
 
 
-*LVM Partitioning (OUTDATED, UPDATE!):*
+*LVM Partitioning:*
 
-| Volume                    | Pool  | Size (MB) |   FS   | Mount Point       |
-|:--------------------------|:-----:|----------:|:------:|:------------------|
-| `/dev/sys/root`           | `sys` |    `4096` | `xfs`  | `/`               |
-| `/dev/sys/swap`           | `sys` |    `4096` |        |                   |
-| `/dev/sys/var_lib_docker` | `sys` |   `65536` | `xfs`  | `/var/lib/docker` |
-| `/dev/sys/dev_shm`        | `sys` |     `512` | `xfs`  |                   |
-| `/dev/sys/home`           | `sys` |   `98304` | `xfs`  | `/home`           |
-| `/dev/sys/tmp`            | `sys` |     `512` | `xfs`  | `/tmp`            |
-| `/dev/sys/opt`            | `sys` |    `4096` | `xfs`  | `/opt`            |
-| `/dev/sys/var`            | `sys` |    `2048` | `xfs`  | `/var`            |
-| `/dev/sys/var_log`        | `sys` |    `2048` | `xfs`  | `/var/log`        |
-| `/dev/sys/var_tmp`        | `sys` |     `256` | `xfs`  | `/var/tmp`        |
-| `/dev/sys/var_log_audit`  | `sys` |     `512` | `xfs`  | `/var/log/audit`  |
-| `/dev/nvme0n1p1`          |       |     `200` | `vfat` | `/boot/efi`       |
-| `/dev/nvme0n1p2`          |       |    `1024` | `xfs`  | `/boot`           |
+| Volume                   | Pool  |    Size |   FS   | Mount Point |
+|:-------------------------|:-----:|--------:|:------:|:------------|
+| `/dev/almalinux_hq/root` | `sys` |  `100G` | `xfs`  | `/`         |
+| `tmpfs`                  | `sys` |   `16G` | `xfs`  | `/dev/shm/` |
+| `/dev/almalinux_hq/home` | `sys` |  `500G` | `xfs`  | `/home`     |
+| `/dev/nvme0n1p1`         |       |  `599M` | `vfat` | `/boot/efi` |
+| `/dev/nvme0n1p2`         |       | `1024M` | `xfs`  | `/boot`     |
 
 
 Hostname-Port Allocations (DEPRECATED, REMOVE!)
