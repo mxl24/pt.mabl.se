@@ -68,6 +68,10 @@
   register: extra_packages_git_lfs_install
   tags: system, extra-packages
 
+- name: Version-lock Git-LFS 2.13.3
+  community.general.yum_versionlock: name=git-lfs-2.13.3 state=present
+  tags: system, extra-packages
+
 - name: Re-initialize Git-LFS on version change
   shell: git lfs uninstall && sleep 3 && git lfs install
   when: extra_packages_git_lfs_install is changed

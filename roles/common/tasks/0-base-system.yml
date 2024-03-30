@@ -84,6 +84,7 @@
       - iotop
       - rsync
       - sysstat
+      - yum-plugin-versionlock
       - tmux
     state: present
   tags: system, base-packages
