@@ -18,76 +18,14 @@
   ansible.builtin.include_tasks: 1-sysadmin-users.yml
   tags: system, sysadmin-users, docker
 
-- name: check for git-lfs
-  shell: git lfs version
-  register: check_git_lfs_version
-  ignore_errors: yes
-  changed_when: no
-  when: ansible_distribution == 'CentOS'
-  tags: common
+- name: Run config tasks in 2-extra-packages.yml
+  debug:
+    msg: 'Running config tasks in common/tasks/2-extra-packages.yml for {{ inventory_hostname }}...'
+  tags: system, extra-packages
 
-- block:
-    - name: run git lfs install script
-      shell: bash -ilc "curl -s
-        https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash"
-    - name: yum install git-lfs
-      shell: yum install -y git-lfs && git lfs install
-      args:
-        warn: no
-  when: ansible_distribution == 'CentOS' and check_git_lfs_version is failed
-  tags: common
-
-- name: epel repo
-  yum_repository:
-    name: epel
-    description: EPEL YUM repo
-    baseurl: http://download.fedoraproject.org/pub/epel/$releasever/$basearch/
-    gpgkey: http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
-    enabled: no
-  when: ansible_distribution == 'CentOS'
-  tags: common
-
-- name: Install EPEL repo
-  ansible.builtin.yum: name=epel-release state=present
-  tags: common
-
-- name: install htop, jq, python-pip etc from epel
-  yum:
-    name: [ 'htop', 'jq', 'python-pip', 'bash-completion-extras' ]
-    enablerepo: epel
-    state: present
-  when: ansible_distribution == 'CentOS'
-  tags: common
-
-- name: Install 'htop' and 'jq' from EPEL, 'bash-completion' from base
-  yum:
-    name: [ 'htop', 'jq', 'bash-completion' ]
-    state: present
-  when: ansible_distribution == 'AlmaLinux'
-  tags: common
-
-- name: Install snapd from EPEL
-  ansible.builtin.yum: name=snapd enablerepo=epel state=present
-  register: snapd_install
-  tags: common
-
-- name: Enable 'classic snap' support
-  ansible.builtin.file:
-    src: /var/lib/snapd/snap
-    dest: /snap
-    state: link
-  tags: common
-
-- name: Set snapd service to running and enabled
-  service: name=snapd state=started enabled=yes
-  tags: common
-
-- name: Update snap after install
-  shell: snap install core; snap refresh core
-  changed_when: true
-  failed_when: false
-  when: snapd_install is changed
-  tags: common
+- name: Install extra packages via EPEL and similar
+  ansible.builtin.include_tasks: 2-extra-packages.yml
+  tags: system, extra-packages
 
 - name: Configure Python Pip to disable version check
   ansible.builtin.blockinfile:

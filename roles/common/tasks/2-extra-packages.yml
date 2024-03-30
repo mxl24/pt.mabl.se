@@ -1,0 +1,98 @@
+---
+
+- name: Install EPEL repo
+  ansible.builtin.yum: name=epel-release state=present
+  tags: system, extra-packages
+
+- name: Install htop, multitail
+  ansible.builtin.yum:
+    name:
+      - htop
+      - multitail
+    state: present
+  tags: system, extra-packages
+
+- name: Install GNU parallel
+  ansible.builtin.yum: name=parallel state=present
+  register: extra_packages_gnu_parallel_install
+  tags: system, extra-packages
+
+- name: Suppress GNU parallel citation notice for 'root' user
+  ansible.builtin.shell: bash -ilc "echo \"will cite\" | parallel --bibtex"
+  when: extra_packages_gnu_parallel_install is changed
+  register: extra_packages_gnu_parallel_install_root
+  failed_when: extra_packages_gnu_parallel_install_root.rc != 255
+  tags: system, extra-packages
+
+- name: Suppress GNU parallel citation notice for 'mblomdahl' user
+  ansible.builtin.shell: bash -ilc "echo \"will cite\" | parallel --bibtex"
+  become: yes
+  become_user: mblomdahl
+  when: extra_packages_gnu_parallel_install is changed
+  register: extra_packages_gnu_parallel_install_mblomdahl
+  failed_when: extra_packages_gnu_parallel_install_mblomdahl.rc != 255
+  tags: system, extra-packages
+
+- name: Check for Git-LFS
+  ansible.builtin.shell: git lfs version
+  register: extra_packages_check_git_lfs_version
+  ignore_errors: yes
+  changed_when: no
+  tags: system, extra-packages
+
+- name: Install Git-LFS v2.13.3
+  when: extra_packages_check_git_lfs_version is failed
+  block:
+    - name: run git lfs install script
+      ansible.builtin.shell: bash -ilc "curl -s
+        https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash"
+    - name: yum install git-lfs
+      ansible.builtin.shell: yum install -y git-lfs-2.13.3 && git lfs install
+  tags: system, extra-packages
+
+- name: Set Git-LFS repo to disabled
+  ansible.builtin.yum_repository:
+    enabled: no
+    name: github_git-lfs
+    description: github_git-lfs
+    baseurl: https://packagecloud.io/github/git-lfs/el/{{ ansible_distribution_major_version }}/$basearch
+    gpgkey: https://packagecloud.io/github/git-lfs/gpgkey
+    sslverify: yes
+    sslcacert: /etc/pki/tls/certs/ca-bundle.crt
+    metadata_expire: "300"
+  tags: system, extra-packages
+
+- name: Install specific Git-LFS version
+  ansible.builtin.yum: name=git-lfs-2.13.3 enablerepo=github_git-lfs state=present
+  register: extra_packages_git_lfs_install
+  tags: system, extra-packages
+
+- name: Re-initialize Git-LFS on version change
+  shell: git lfs uninstall && sleep 3 && git lfs install
+  when: extra_packages_git_lfs_install is changed
+  tags: system, extra-packages
+
+- name: Install snapd from EPEL
+  ansible.builtin.yum: name=snapd enablerepo=epel state=present
+  register: snapd_install
+  tags: system, extra-packages
+
+- name: Enable 'classic snap' support
+  ansible.builtin.file:
+    src: /var/lib/snapd/snap
+    dest: /snap
+    state: link
+  tags: system, extra-packages
+
+- name: Set snapd service to running and enabled
+  service: name=snapd state=started enabled=yes
+  tags: system, extra-packages
+
+- name: Update snap after install
+  shell: snap install core; snap refresh core
+  changed_when: true
+  failed_when: false
+  when: snapd_install is changed
+  tags: system, extra-packages
+
+...
