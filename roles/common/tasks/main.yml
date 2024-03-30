@@ -45,10 +45,14 @@
   ansible.builtin.include_tasks: 4-java.yml
   tags: system, java, jenv
 
-- name: Install Node 10 from AppStream
-  ansible.builtin.yum: name=nodejs-devel state=absent
-  when: ansible_distribution == 'AlmaLinux'
-  tags: common
+- name: Run config tasks in 5-docker.yml
+  debug:
+    msg: 'Running config tasks in common/tasks/4-docker.yml for {{ inventory_hostname }}...'
+  tags: system, docker
+
+- name: Install Docker Engine
+  ansible.builtin.include_tasks: 5-docker.yml
+  tags: system, docker
 
 #- name: Remove ~/.ssh/authorized_keys for 'root' user
 #  ansible.builtin.file:

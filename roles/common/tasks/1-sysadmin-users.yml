@@ -10,6 +10,7 @@
     name: "{{ item.user }}"
     password: "{{ item.passwd }}"
     groups: wheel
+    append: yes
     state: present
     force: yes
   with_items: "{{ sysadmins }}"

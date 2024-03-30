@@ -69,7 +69,7 @@
   tags: system, extra-packages
 
 - name: Version-lock Git-LFS 2.13.3
-  community.general.yum_versionlock: name=git-lfs-2.13.3 state=present
+  community.general.yum_versionlock: name=git-lfs state=present
   tags: system, extra-packages
 
 - name: Re-initialize Git-LFS on version change

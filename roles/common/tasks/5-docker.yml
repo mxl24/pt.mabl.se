@@ -1,0 +1,30 @@
+---
+
+- name: Configure 'docker-ce-stable' repo
+  ansible.builtin.yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/rhel/$releasever/$basearch/stable
+    gpgkey: https://download.docker.com/linux/rhel/gpg
+    enabled: no
+  tags: system, docker
+
+- name: Install 'docker-ce-25.0.5'
+  ansible.builtin.yum: name=docker-ce-25.0.5 enablerepo=docker-ce-stable state=present
+  register: docker_install
+  tags: system, docker
+
+- name: Docker engine running and enabled
+  ansible.builtin.service: name=docker state=started enabled=yes
+  tags: system, docker
+
+- name: Restart Docker service installation change
+  ansible.builtin.service: name=docker state=restarted
+  when: docker_install is changed
+  tags: system, docker
+
+- name: Add '{{ ci_runtime_user }}' user to 'docker' group
+  user: name={{ ci_runtime_user }} groups=docker append=yes
+  tags: system, docker
+
+...
