@@ -68,6 +68,13 @@
     - /usr/lib/jvm/java-17-openjdk
     - /usr/lib/jvm/java-21-openjdk
   when: java_jenv_directories is changed
-  tags: java
+  tags: jenv
+
+- name: Run jEnv refresh
+  shell: bash -l -c 'jenv rehash'
+  become: yes
+  become_user: "{{ ci_runtime_user }}"
+  when: java_jenv_directories is changed
+  tags: jenv
 
 ...
