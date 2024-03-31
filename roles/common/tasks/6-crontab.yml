@@ -5,7 +5,7 @@
   when: daily_security_update_enabled
   tags: system, crontab
 
-- name: Enable/disable 'daily container clean-up' cron job every morning at 0400 (UTC)
+- name: Enable/disable 'daily-security-update' cron job every morning at 0400 (UTC)
   ansible.builtin.cron:
     name: daily-security-update
     hour: "4"

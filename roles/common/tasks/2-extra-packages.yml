@@ -22,7 +22,7 @@
   ansible.builtin.shell: bash -ilc "echo \"will cite\" | parallel --bibtex"
   when: extra_packages_gnu_parallel_install is changed
   register: extra_packages_gnu_parallel_install_root
-  failed_when: extra_packages_gnu_parallel_install_root.rc != 255
+  failed_when: extra_packages_gnu_parallel_install_root.rc not in [0, 255]
   tags: system, extra-packages
 
 - name: Suppress GNU parallel citation notice for '{{ ci_runtime_user }}' user
@@ -31,7 +31,7 @@
   become_user: "{{ ci_runtime_user }}"
   when: extra_packages_gnu_parallel_install is changed
   register: extra_packages_gnu_parallel_install_ci_runtime_user
-  failed_when: extra_packages_gnu_parallel_install_ci_runtime_user.rc != 255
+  failed_when: extra_packages_gnu_parallel_install_ci_runtime_user.rc not in [0, 255]
   tags: system, extra-packages
 
 - name: Check for Git-LFS
@@ -41,14 +41,14 @@
   changed_when: no
   tags: system, extra-packages
 
-- name: Install Git-LFS v2.13.3
+- name: Install Git-LFS v3.5.1
   when: extra_packages_check_git_lfs_version is failed
   block:
     - name: run git lfs install script
       ansible.builtin.shell: bash -ilc "curl -s
         https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash"
     - name: yum install git-lfs
-      ansible.builtin.shell: yum install -y git-lfs-2.13.3 && git lfs install
+      ansible.builtin.shell: yum install -y git-lfs-3.5.1 && git lfs install
   tags: system, extra-packages
 
 - name: Set Git-LFS repo to disabled
@@ -58,17 +58,18 @@
     description: github_git-lfs
     baseurl: https://packagecloud.io/github/git-lfs/el/{{ ansible_distribution_major_version }}/$basearch
     gpgkey: https://packagecloud.io/github/git-lfs/gpgkey
+    gpgcheck: no
     sslverify: yes
     sslcacert: /etc/pki/tls/certs/ca-bundle.crt
     metadata_expire: "300"
   tags: system, extra-packages
 
 - name: Install specific Git-LFS version
-  ansible.builtin.yum: name=git-lfs-2.13.3 enablerepo=github_git-lfs state=present
+  ansible.builtin.yum: name=git-lfs-3.5.1 enablerepo=github_git-lfs state=present
   register: extra_packages_git_lfs_install
   tags: system, extra-packages
 
-- name: Version-lock Git-LFS 2.13.3
+- name: Version-lock Git-LFS 3.5.1
   community.general.yum_versionlock: name=git-lfs state=present
   tags: system, extra-packages
 
